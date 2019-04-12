@@ -27,6 +27,7 @@ $ rm real_world_small.tar.gz.*
 ```
 # Citation
 
+Researchers who use the dataset should cite the associated paper:
 
 ```
 @InProceedings{Wang_2019_CVPR,
@@ -37,3 +38,6 @@ $ rm real_world_small.tar.gz.*
   year = {2019}
 }
 ```
+# License
+
+See `License.txt`

@@ -18,7 +18,7 @@ $ unzip real_Internet.zip
 ```
 
 # Citation
-
+Researchers who use the test set should cite the associated paper:
 
 ```
 @InProceedings{Wang_2019_CVPR,
@@ -29,3 +29,7 @@ $ unzip real_Internet.zip
   year = {2019}
 }
 ```
+
+# License
+
+See `License.txt`
