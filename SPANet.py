@@ -43,10 +43,17 @@ class irnn_layer(nn.Module):
         top_right = x.clone()
         top_up = x.clone()
         top_down = x.clone()
-        top_left[:,:,:,1:] = F.relu(self.left_weight(x)[:,:,:,:W-1]+x[:,:,:,1:],inplace=False)
-        top_right[:,:,:,:-1] = F.relu(self.right_wight(x)[:,:,:,1:]+x[:,:,:,:W-1],inplace=False)
-        top_up[:,:,1:,:] = F.relu(self.up_wight(x)[:,:,:H-1,:]+x[:,:,1:,:],inplace=False)
-        top_down[:,:,:-1,:] = F.relu(self.down_wight(x)[:,:,1:,:]+x[:,:,:H-1,:],inplace=False)
+        for i in range(H-1):
+            top_down[:,:,i+1,:] = F.relu(self.down_wight(x)[:,:,i,:]+top_down[:,:,i+1,:],inplace=False)
+            top_up[:,:,-(i+2),:] = F.relu(self.up_wight(x)[:,:,-(i+1)]+top_up[:,:,-(i+2),:],inplace=False)
+        for i in range(W-1):
+            top_right[:,:,:,i+1] = F.relu(self.right_wight(x)[:,:,:,i]+top_right[:,:,:,i+1],inplace=False)
+            top_left[:,:,:,-(i+2)]= F.relu(self.left_weight(x)[:,:,:,-(i+1)]+top_left[:,:,:,-(i+2)],inplace=False)
+
+        # top_left[:,:,:,1:] = F.relu(self.left_weight(x)[:,:,:,:W-1]+x[:,:,:,1:],inplace=False)
+        # top_right[:,:,:,:-1] = F.relu(self.right_wight(x)[:,:,:,1:]+x[:,:,:,:W-1],inplace=False)
+        # top_up[:,:,1:,:] = F.relu(self.up_wight(x)[:,:,:H-1,:]+x[:,:,1:,:],inplace=False)
+        # top_down[:,:,:-1,:] = F.relu(self.down_wight(x)[:,:,1:,:]+x[:,:,:H-1,:],inplace=False)
         return (top_up,top_right,top_down,top_left)
 
 
