@@ -15,7 +15,7 @@ class TrainValDataset(Dataset):
         return self.file_num * 100
 
     def __getitem__(self, idx):
-        file_name = self.mat_files[idx % self.file_num
+        file_name = self.mat_files[idx % self.file_num]
         gt_file = file_name.split(' ')[1][:-1]
         img_file = file_name.split(' ')[0]
 
