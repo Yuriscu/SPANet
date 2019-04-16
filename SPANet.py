@@ -32,10 +32,10 @@ class Bottleneck(nn.Module):
 class irnn_layer(nn.Module):
     def __init__(self,in_channels):
         super(irnn_layer,self).__init__()
-        self.left_weight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
-        self.right_wight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
-        self.up_wight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
-        self.down_wight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
+        self.left_weight = nn.Parameter(torch.tensor(1.0),True)
+        self.right_weight = nn.Parameter(torch.tensor(1.0),True)
+        self.up_weight = nn.Parameter(torch.tensor(1.0),True)
+        self.down_weight = nn.Parameter(torch.tensor(1.0),True)
         
     def forward(self,x):
         _,_,H,W = x.shape
@@ -43,16 +43,13 @@ class irnn_layer(nn.Module):
         top_right = x.clone()
         top_up = x.clone()
         top_down = x.clone()
-        weight_down = self.down_wight(x)
-        weight_up = self.up_wight(x)
-        weight_right = self.right_wight(x)
-        weight_left = self.left_weight(x)
         for i in range(H-1):
-            top_down[:,:,i+1,:] = F.relu(weight_down[:,:,i,:]+top_down[:,:,i+1,:],inplace=False)
-            top_up[:,:,-(i+2),:] = F.relu(weight_up[:,:,-(i+1),:]+top_up[:,:,-(i+2),:],inplace=False)
+            top_down[:,:,i+1,:] = F.relu(top_down[:,:,i,:].clone() * self.down_weight +top_down[:,:,i+1,:],inplace=False)
+            top_up[:,:,-(i+2),:] = F.relu(top_up[:,:,-(i+1),:].clone() * self.up_weight +top_up[:,:,-(i+2),:],inplace=False)
         for i in range(W-1):
-            top_right[:,:,:,i+1] = F.relu(weight_right[:,:,:,i]+top_right[:,:,:,i+1],inplace=False)
-            top_left[:,:,:,-(i+2)]= F.relu(weight_left[:,:,:,-(i+1)]+top_left[:,:,:,-(i+2)],inplace=False)
+            top_right[:,:,:,i+1] = F.relu(top_right[:,:,:,i].clone() * self.right_weight +top_right[:,:,:,i+1],inplace=False)
+            top_left[:,:,:,-(i+2)]= F.relu(top_left[:,:,:,-(i+1)].clone() * self.left_weight +top_left[:,:,:,-(i+2)],inplace=False)
+
         return (top_up,top_right,top_down,top_left)
 
 
@@ -161,7 +158,7 @@ class SPANet(nn.Module):
         out = F.relu(self.res_block1(out) + out)
         out = F.relu(self.res_block2(out) + out)
         out = F.relu(self.res_block3(out) + out)
-        
+         
         Attention1 = self.SAM1(out) 
         out = F.relu(self.res_block4(out) * Attention1  + out)
         out = F.relu(self.res_block5(out) * Attention1  + out)
