@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from collections import OrderedDict
-# import common
+import math
 
 ###### Layer 
 def conv1x1(in_channels, out_channels, stride = 1):
@@ -32,11 +32,12 @@ class Bottleneck(nn.Module):
 class irnn_layer(nn.Module):
     def __init__(self,in_channels):
         super(irnn_layer,self).__init__()
-        self.left_weight = nn.Parameter(torch.tensor(1.0),True)
-        self.right_weight = nn.Parameter(torch.tensor(1.0),True)
-        self.up_weight = nn.Parameter(torch.tensor(1.0),True)
-        self.down_weight = nn.Parameter(torch.tensor(1.0),True)
-        
+        self.left_weight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
+        self.right_weight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
+        self.up_weight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
+        self.down_weight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
+
+
     def forward(self,x):
         _,_,H,W = x.shape
         top_left = x.clone()
@@ -44,11 +45,11 @@ class irnn_layer(nn.Module):
         top_up = x.clone()
         top_down = x.clone()
         for i in range(H-1):
-            top_down[:,:,i+1,:] = F.relu(top_down[:,:,i,:].clone() * self.down_weight +top_down[:,:,i+1,:],inplace=False)
-            top_up[:,:,-(i+2),:] = F.relu(top_up[:,:,-(i+1),:].clone() * self.up_weight +top_up[:,:,-(i+2),:],inplace=False)
+            top_down[:,:,i+1,:] = F.relu(self.down_weight(top_down[:,:,i:i+1,:].clone())[:,:,0,:]   +top_down[:,:,i+1,:],inplace=False)
+            top_up[:,:,-(i+2),:] = F.relu(self.up_weight(top_up[:,:,-(i+1):H-i,:].clone())[:,:,0,:]   +top_up[:,:,-(i+2),:],inplace=False)
         for i in range(W-1):
-            top_right[:,:,:,i+1] = F.relu(top_right[:,:,:,i].clone() * self.right_weight +top_right[:,:,:,i+1],inplace=False)
-            top_left[:,:,:,-(i+2)]= F.relu(top_left[:,:,:,-(i+1)].clone() * self.left_weight +top_left[:,:,:,-(i+2)],inplace=False)
+            top_right[:,:,:,i+1] = F.relu(self.right_weight(top_right[:,:,:,i:i+1].clone())[:,:,:,0]  +top_right[:,:,:,i+1],inplace=False)
+            top_left[:,:,:,-(i+2)]= F.relu(self.left_weight(top_left[:,:,:,-(i+1):H-i].clone())[:,:,:,0]   +top_left[:,:,:,-(i+2)],inplace=False)
 
         return (top_up,top_right,top_down,top_left)
 
