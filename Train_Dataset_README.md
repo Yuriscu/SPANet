@@ -1,30 +1,16 @@
-# Download links
-
-Coming soon!
-
-
 # Files
 
-* real_world_small.tar.gz.00 - real_world_small.tar.gz.11
-* dataset_small_rand.txt
+* real_world.zip.00 - real_world.zip.11
+* real_world.txt
 
-# Unpack
+## File example
+ 
+ `./real_world/000/000-f/000-f_x_y.png`
+ 
+ f: Frame number
+ x,y: Postion in frame
+ 
 
-* macOS:
-
-```
-$ brew install pigz
-$ cat real_world_small.tar.gz.* | unpigz -p 8 | tar -xvC ./
-$ rm real_world_small.tar.gz.*
-```
-
-* Ubuntu:
-
-```
-$ apt install pigz
-$ cat real_world_small.tar.gz.* | unpigz -p 8 | tar -xvC ./
-$ rm real_world_small.tar.gz.*
-```
 # Citation
 
 Researchers who use the dataset should cite the associated paper:

@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from collections import OrderedDict
-import math
+# import common
 
 ###### Layer 
 def conv1x1(in_channels, out_channels, stride = 1):
@@ -36,21 +36,17 @@ class irnn_layer(nn.Module):
         self.right_weight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
         self.up_weight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
         self.down_weight = nn.Conv2d(in_channels,in_channels,kernel_size=1,stride=1,groups=in_channels,padding=0)
-
-
+        
     def forward(self,x):
         _,_,H,W = x.shape
         top_left = x.clone()
         top_right = x.clone()
         top_up = x.clone()
         top_down = x.clone()
-        for i in range(H-1):
-            top_down[:,:,i+1,:] = F.relu(self.down_weight(top_down[:,:,i:i+1,:].clone())[:,:,0,:]   +top_down[:,:,i+1,:],inplace=False)
-            top_up[:,:,-(i+2),:] = F.relu(self.up_weight(top_up[:,:,-(i+1):H-i,:].clone())[:,:,0,:]   +top_up[:,:,-(i+2),:],inplace=False)
-        for i in range(W-1):
-            top_right[:,:,:,i+1] = F.relu(self.right_weight(top_right[:,:,:,i:i+1].clone())[:,:,:,0]  +top_right[:,:,:,i+1],inplace=False)
-            top_left[:,:,:,-(i+2)]= F.relu(self.left_weight(top_left[:,:,:,-(i+1):H-i].clone())[:,:,:,0]   +top_left[:,:,:,-(i+2)],inplace=False)
-
+        top_left[:,:,:,1:] = F.relu(self.left_weight(x)[:,:,:,:W-1]+x[:,:,:,1:],inplace=False)
+        top_right[:,:,:,:-1] = F.relu(self.right_weight(x)[:,:,:,1:]+x[:,:,:,:W-1],inplace=False)
+        top_up[:,:,1:,:] = F.relu(self.up_weight(x)[:,:,:H-1,:]+x[:,:,1:,:],inplace=False)
+        top_down[:,:,:-1,:] = F.relu(self.down_weight(x)[:,:,1:,:]+x[:,:,:H-1,:],inplace=False)
         return (top_up,top_right,top_down,top_left)
 
 
@@ -96,26 +92,26 @@ class SAM(nn.Module):
     
     def forward(self,x):
         if self.attention:
-            wight = self.attention_layer(x)
+            weight = self.attention_layer(x)
         out = self.conv1(x)
         top_up,top_right,top_down,top_left = self.irnn1(out)
         
         # direction attention
         if self.attention:
-            top_up.mul(wight[:,0:1,:,:])
-            top_right.mul(wight[:,1:2,:,:])
-            top_down.mul(wight[:,2:3,:,:])
-            top_left.mul(wight[:,3:4,:,:])
+            top_up.mul(weight[:,0:1,:,:])
+            top_right.mul(weight[:,1:2,:,:])
+            top_down.mul(weight[:,2:3,:,:])
+            top_left.mul(weight[:,3:4,:,:])
         out = torch.cat([top_up,top_right,top_down,top_left],dim=1)
         out = self.conv2(out)
         top_up,top_right,top_down,top_left = self.irnn2(out)
         
         # direction attention
         if self.attention:
-            top_up.mul(wight[:,0:1,:,:])
-            top_right.mul(wight[:,1:2,:,:])
-            top_down.mul(wight[:,2:3,:,:])
-            top_left.mul(wight[:,3:4,:,:])
+            top_up.mul(weight[:,0:1,:,:])
+            top_right.mul(weight[:,1:2,:,:])
+            top_down.mul(weight[:,2:3,:,:])
+            top_left.mul(weight[:,3:4,:,:])
         
         out = torch.cat([top_up,top_right,top_down,top_left],dim=1)
         out = self.conv3(out)
@@ -159,7 +155,7 @@ class SPANet(nn.Module):
         out = F.relu(self.res_block1(out) + out)
         out = F.relu(self.res_block2(out) + out)
         out = F.relu(self.res_block3(out) + out)
-         
+        
         Attention1 = self.SAM1(out) 
         out = F.relu(self.res_block4(out) * Attention1  + out)
         out = F.relu(self.res_block5(out) * Attention1  + out)

@@ -118,7 +118,7 @@ class Session:
         self.net.load_state_dict(obj['net'])
         if mode == 'train':
             self.opt.load_state_dict(obj['opt'])
-            self.step = obj['clock']
+        self.step = obj['clock']
         self.sche.last_epoch = self.step
     
         
