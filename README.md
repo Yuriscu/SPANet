@@ -59,3 +59,7 @@ $ python main.py -a test -m latest
 
 ## License
 Please see `License.txt` file.
+
+## Acknowledgement 
+
+Code borrows from [RESCAN](https://github.com/XiaLiPKU/RESCAN) by Xia Li. Thanks for sharing!
