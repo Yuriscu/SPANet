@@ -56,6 +56,7 @@ $ python main.py -a train -m latest
 $ python main.py -a test -m latest
 ```
 
+*All PSNR and SSIM of results are computed by using skimage.measure*
 
 ## License
 Please see `License.txt` file.
